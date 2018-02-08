@@ -42,7 +42,7 @@ import {
   INPUT_OBJECT_TYPE_EXTENSION,
   DIRECTIVE_DEFINITION,
 } from 'graphql/language/kinds';
-import {getGraphQLConfig, GraphQLConfig} from 'graphql-config';
+import {getGraphQLConfig, GraphQLConfig, GraphQLEndpoint} from 'graphql-config';
 import {getQueryAndRange} from './MessageProcessor';
 import stringToHash from './stringToHash';
 import glob from 'glob';
@@ -370,8 +370,8 @@ export class GraphQLCache implements GraphQLCacheInterface {
 
   _extendSchema(
     schema: GraphQLSchema,
-    schemaPath: string,
-    projectName: string,
+    schemaPath: ?string,
+    schemaCacheKey: ?string,
   ): GraphQLSchema {
     const graphQLFileMap = this._graphQLFileListCache.get(this._configDir);
     const typeExtensions = [];
@@ -405,22 +405,25 @@ export class GraphQLCache implements GraphQLCacheInterface {
         });
       });
     });
-    const sorted = typeExtensions.sort((a: any, b: any) => {
-      const aName = a.definition ? a.definition.name.value : a.name.value;
-      const bName = b.definition ? b.definition.name.value : b.name.value;
-      return aName > bName ? 1 : -1;
-    });
 
-    const hash = stringToHash(JSON.stringify(sorted));
-    const typeExtCacheKey = `${schemaPath}:${projectName}`;
-    if (
-      this._typeExtensionMap.has(typeExtCacheKey) &&
-      this._typeExtensionMap.get(typeExtCacheKey) === hash
-    ) {
-      return schema;
+    if (schemaCacheKey) {
+      const sorted = typeExtensions.sort((a: any, b: any) => {
+        const aName = a.definition ? a.definition.name.value : a.name.value;
+        const bName = b.definition ? b.definition.name.value : b.name.value;
+        return aName > bName ? 1 : -1;
+      });
+      const hash = stringToHash(JSON.stringify(sorted));
+
+      if (
+        this._typeExtensionMap.has(schemaCacheKey) &&
+        this._typeExtensionMap.get(schemaCacheKey) === hash
+      ) {
+        return schema;
+      }
+
+      this._typeExtensionMap.set(schemaCacheKey, hash);
     }
 
-    this._typeExtensionMap.set(typeExtCacheKey, hash);
     return extendSchema(schema, {
       kind: DOCUMENT,
       definitions: typeExtensions,
@@ -439,26 +442,25 @@ export class GraphQLCache implements GraphQLCacheInterface {
 
     const projectName = appName || 'undefinedName';
     const schemaPath = projectConfig.schemaPath;
-    const endpointsExtension = projectConfig.endpointsExtension;
-    const endpoint = endpointsExtension && endpointsExtension.getEndpoint(); // XXX pass name?
+    const endpointInfo = this._getDefaultEndpoint(projectConfig);
 
     let schemaCacheKey = null;
     let schema = null;
 
-    if (endpoint) {
-      schemaCacheKey = `${endpoint.url}:${projectName}`;
+    if (endpointInfo) {
+      schemaCacheKey = `${endpointInfo.endpointName}:${projectName}`;
 
       // Maybe use cache
       if (this._schemaMap.has(schemaCacheKey)) {
         schema = this._schemaMap.get(schemaCacheKey);
         return schema && queryHasExtensions
-          ? this._extendSchema(schema, schemaPath, projectName)
+          ? this._extendSchema(schema, schemaPath, schemaCacheKey)
           : schema;
       }
 
       // Read schema from network
       try {
-        schema = await endpoint.resolveSchema();
+        schema = await endpointInfo.endpoint.resolveSchema();
       } catch (failure) {
         // Never mind
       }
@@ -471,7 +473,7 @@ export class GraphQLCache implements GraphQLCacheInterface {
       if (this._schemaMap.has(schemaCacheKey)) {
         schema = this._schemaMap.get(schemaCacheKey);
         return schema && queryHasExtensions
-          ? this._extendSchema(schema, schemaPath, projectName)
+          ? this._extendSchema(schema, schemaPath, schemaCacheKey)
           : schema;
       }
 
@@ -490,7 +492,7 @@ export class GraphQLCache implements GraphQLCacheInterface {
     }
 
     if (this._graphQLFileListCache.has(this._configDir)) {
-      schema = this._extendSchema(schema, schemaPath, projectName);
+      schema = this._extendSchema(schema, schemaPath, schemaCacheKey);
     }
 
     if (schemaCacheKey) {
@@ -498,6 +500,31 @@ export class GraphQLCache implements GraphQLCacheInterface {
     }
     return schema;
   };
+
+  _getDefaultEndpoint(
+    projectConfig: GraphQLProjectConfig,
+  ): ?{endpointName: string, endpoint: GraphQLEndpoint} {
+    // Jumping through hoops to get the default endpoint by name (needed for cache key)
+    const endpointsExtension = projectConfig.endpointsExtension;
+    if (!endpointsExtension) {
+      return null;
+    }
+
+    const defaultRawEndpoint = endpointsExtension.getRawEndpoint();
+    const rawEndpointsMap = endpointsExtension.getRawEndpointsMap();
+    const endpointName = Object.keys(rawEndpointsMap).find(
+      name => rawEndpointsMap[name] === defaultRawEndpoint,
+    );
+
+    if (!endpointName) {
+      return null;
+    }
+
+    return {
+      endpointName,
+      endpoint: endpointsExtension.getEndpoint(endpointName),
+    };
+  }
 
   /**
   * Given a list of GraphQL file metadata, read all files collected from watchman
