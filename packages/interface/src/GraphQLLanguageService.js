@@ -46,7 +46,8 @@ import {
 
 import {parse, print} from 'graphql';
 import {getAutocompleteSuggestions} from './getAutocompleteSuggestions';
-import {getTypeInformation} from './getTypeInformation';
+import {getHoverInformation} from './getHoverInformation';
+import type {Hover} from 'vscode-languageserver-types';
 import {validateQuery, getRange, SEVERITY} from './getDiagnostics';
 import {
   getDefinitionQueryResultForFragmentSpread,
@@ -178,11 +179,11 @@ export class GraphQLLanguageService {
     return [];
   }
 
-  async getTypeInformation(
+  async getHoverInformation(
     query: string,
     position: Position,
     filePath: Uri,
-  ): Promise<string> {
+  ): Promise<Hover.contents> {
     const projectConfig = this._graphQLConfig.getConfigForFile(filePath);
     if (projectConfig.schemaPath) {
       const schema = await this._graphQLCache.getSchema(
@@ -190,7 +191,7 @@ export class GraphQLLanguageService {
       );
 
       if (schema) {
-        return getTypeInformation(schema, query, position);
+        return getHoverInformation(schema, query, position);
       }
     }
     return 'no schema :(';

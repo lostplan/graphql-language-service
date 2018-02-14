@@ -394,7 +394,7 @@ export class MessageProcessor {
     if (range) {
       position.line -= range.start.line;
     }
-    const result = await this._languageService.getTypeInformation(
+    const result = await this._languageService.getHoverInformation(
       query,
       position,
       textDocument.uri,

@@ -1,22 +1,18 @@
 // @flow
 
-import type { GraphQLSchema } from 'graphql';
-import type { ContextToken } from 'graphql-language-service-types';
+import type {GraphQLSchema} from 'graphql';
+import type {ContextToken} from 'graphql-language-service-types';
+import type {Hover} from 'vscode-languageserver-types';
 import type {Position} from 'graphql-language-service-utils';
 import {print} from 'graphql/language/printer';
 import {getTokenAtPosition, getTypeInfo} from './getAutocompleteSuggestions';
 
-type MarkupContent = {
-  kind: 'plaintext' | 'markdown',
-  value: string
-}
-
-export function getTypeInformation(
+export function getHoverInformation(
   schema: GraphQLSchema,
   queryText: string,
   cursor: Position,
   contextToken?: ContextToken,
-): string | MarkupContent | Array<MarkupContent> {
+): Hover.contents {
   const token = contextToken || getTokenAtPosition(queryText, cursor);
   const typeInfo = getTypeInfo(schema, token.state);
   const fieldDef = typeInfo ? typeInfo.fieldDef : null;
@@ -46,7 +42,7 @@ export function getTypeInformation(
 
   return [
     {kind: 'markdown', value: `${printedType}\n\n${fieldDescription}`.trim()},
-    {kind: 'markdown', value: typeDescription}
+    {kind: 'markdown', value: typeDescription},
   ];
 
   // const {
@@ -58,8 +54,6 @@ export function getTypeInformation(
   // if (!type) {
   //   return '';
   // }
-
-
 
   // let typeStr: string = `\`${type.name}\``;
   // if (parentType && fieldName) {
