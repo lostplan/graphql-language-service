@@ -107,7 +107,11 @@ export class GraphQLLanguageService {
       ];
     }
 
-    if (!schemaPath) {
+    const schema = await this._graphQLCache
+      .getSchema(projectConfig.projectName, queryHasExtensions)
+      .catch(() => null);
+
+    if (!schema) {
       return [];
     }
 
@@ -137,11 +141,6 @@ export class GraphQLLanguageService {
       // query, so we return an empty array here.
       return [];
     }
-
-    const schema = await this._graphQLCache.getSchema(
-      projectConfig.projectName,
-      queryHasExtensions,
-    );
 
     // Check if there are custom validation rules to be used
     let customRules;
