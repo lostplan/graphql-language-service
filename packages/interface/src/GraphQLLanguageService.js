@@ -186,9 +186,9 @@ export class GraphQLLanguageService {
   ): Promise<Hover.contents> {
     const projectConfig = this._graphQLConfig.getConfigForFile(filePath);
     if (projectConfig.schemaPath) {
-      const schema = await this._graphQLCache.getSchema(
-        projectConfig.projectName,
-      );
+      const schema = await this._graphQLCache
+        .getSchema(projectConfig.projectName)
+        .catch(() => null);
 
       if (schema) {
         return getHoverInformation(schema, query, position);
