@@ -185,16 +185,14 @@ export class GraphQLLanguageService {
     filePath: Uri,
   ): Promise<Hover.contents> {
     const projectConfig = this._graphQLConfig.getConfigForFile(filePath);
-    if (projectConfig.schemaPath) {
-      const schema = await this._graphQLCache
-        .getSchema(projectConfig.projectName)
-        .catch(() => null);
+    const schema = await this._graphQLCache
+      .getSchema(projectConfig.projectName)
+      .catch(() => null);
 
-      if (schema) {
-        return getHoverInformation(schema, query, position);
-      }
+    if (schema) {
+      return getHoverInformation(schema, query, position);
     }
-    return 'no schema :(';
+    return '';
   }
 
   async getDefinition(
