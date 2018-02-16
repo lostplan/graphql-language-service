@@ -1,4 +1,12 @@
-// @flow
+/**
+ *  Copyright (c) Facebook, Inc.
+ *  All rights reserved.
+ *
+ *  This source code is licensed under the license found in the
+ *  LICENSE file in the root directory of this source tree.
+ *
+ *  @flow
+ */
 
 /**
  * Ported from codemirror-graphql
@@ -38,29 +46,17 @@ export function getHoverInformation(
     (kind === 'AliasedField' && step === 2 && typeInfo.fieldDef)
   ) {
     const into = [];
-    text(into, '```');
-    text(into, '\n');
     renderField(into, typeInfo, options);
-    text(into, '\n');
-    text(into, '```');
     renderDescription(into, options, typeInfo.fieldDef);
     return into.join('').trim();
   } else if (kind === 'Directive' && step === 1 && typeInfo.directiveDef) {
     const into = [];
-    text(into, '```');
-    text(into, '\n');
     renderDirective(into, typeInfo, options);
-    text(into, '\n');
-    text(into, '```');
     renderDescription(into, options, typeInfo.directiveDef);
     return into.join('').trim();
   } else if (kind === 'Argument' && step === 0 && typeInfo.argDef) {
     const into = [];
-    text(into, '```');
-    text(into, '\n');
     renderArg(into, typeInfo, options);
-    text(into, '\n');
-    text(into, '```');
     renderDescription(into, options, typeInfo.argDef);
     return into.join('').trim();
   } else if (
@@ -69,11 +65,7 @@ export function getHoverInformation(
     typeInfo.enumValue.description
   ) {
     const into = [];
-    text(into, '```');
-    text(into, '\n');
     renderEnumValue(into, typeInfo, options);
-    text(into, '\n');
-    text(into, '```');
     renderDescription(into, options, typeInfo.enumValue);
     return into.join('').trim();
   } else if (
@@ -82,11 +74,7 @@ export function getHoverInformation(
     typeInfo.type.description
   ) {
     const into = [];
-    text(into, '```');
-    text(into, '\n');
     renderType(into, typeInfo, options, typeInfo.type);
-    text(into, '\n');
-    text(into, '```');
     renderDescription(into, options, typeInfo.type);
     return into.join('').trim();
   }
