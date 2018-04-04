@@ -448,7 +448,9 @@ export class GraphQLCache implements GraphQLCacheInterface {
     let schema = null;
 
     if (endpointInfo) {
-      schemaCacheKey = `${endpointInfo.endpointName}:${projectName}`;
+      const {endpoint, endpointName} = endpointInfo;
+
+      schemaCacheKey = `${endpointName}:${projectName}`;
 
       // Maybe use cache
       if (this._schemaMap.has(schemaCacheKey)) {
@@ -460,7 +462,7 @@ export class GraphQLCache implements GraphQLCacheInterface {
 
       // Read schema from network
       try {
-        schema = await endpointInfo.endpoint.resolveSchema();
+        schema = await endpoint.resolveSchema();
       } catch (failure) {
         // Never mind
       }

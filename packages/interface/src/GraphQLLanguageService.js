@@ -107,14 +107,6 @@ export class GraphQLLanguageService {
       ];
     }
 
-    const schema = await this._graphQLCache
-      .getSchema(projectConfig.projectName, queryHasExtensions)
-      .catch(() => null);
-
-    if (!schema) {
-      return [];
-    }
-
     // If there's a matching config, proceed to prepare to run validation
     let source = query;
     const fragmentDefinitions = await this._graphQLCache.getFragmentDefinitions(
@@ -153,6 +145,14 @@ export class GraphQLLanguageService {
         customRules = require(`${rulesPath}`)(this._graphQLConfig);
       }
       /* eslint-enable no-implicit-coercion */
+    }
+
+    const schema = await this._graphQLCache
+      .getSchema(projectConfig.projectName, queryHasExtensions)
+      .catch(() => null);
+
+    if (!schema) {
+      return [];
     }
 
     return validateQuery(validationAst, schema, customRules, isRelayCompatMode);
