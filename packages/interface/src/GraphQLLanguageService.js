@@ -24,6 +24,7 @@ import type {
   Uri,
 } from 'graphql-language-service-types';
 import type {Position} from 'graphql-language-service-utils';
+import type {Hover} from 'vscode-languageserver-types';
 
 import {
   FRAGMENT_DEFINITION,
@@ -47,7 +48,6 @@ import {
 import {parse, print} from 'graphql';
 import {getAutocompleteSuggestions} from './getAutocompleteSuggestions';
 import {getHoverInformation} from './getHoverInformation';
-import type {Hover} from 'vscode-languageserver-types';
 import {validateQuery, getRange, SEVERITY} from './getDiagnostics';
 import {
   getDefinitionQueryResultForFragmentSpread,
